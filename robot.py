@@ -1,75 +1,79 @@
-#import statements
-import rev
+# TODO: insert robot code here
+
+# Import statements
+
 import wpilib
 import wpilib.drive
-#from constants import constants
 from wpilib.drive import MecanumDrive
 from rev import SparkMax, SparkLowLevel
 
 #Declare the class I'm sure why but you have to do this
 class MyRobot(wpilib.TimedRobot):
-
-
-#this part of the code is for autonomous mode which we havent started yet so the "pass" tells the robot to ignore it for now
-    def AutonomousInit(self):
-          pass
-    def AutonomousPeriodic(self):
-         pass
     
+    # Allows the motor variables to be called on anywhere in the program
+    global RIGHT_FRONT_MOTOR,LEFT_FRONT_MOTOR,RIGHT_REAR_MOTOR,LEFT_REAR_MOTOR,INTAKE_MOTOR,ELEVATOR_MOTOR
+    
+    # States the CAN ID of each motor
+    RIGHT_FRONT_MOTOR = 1
+    LEFT_FRONT_MOTOR = 2
+    RIGHT_REAR_MOTOR = 3
+    LEFT_REAR_MOTOR = 4
+    INTAKE_MOTOR = 5
+    ELEVATOR_MOTOR = 6
 
-#Initialize ur robot this parts makes everything work you set the robot up with al the "knowledge"
+    #Initialize ur robot this parts makes everything work you set the robot up with al the "knowledge"
     def robotInit(self):
-        kRightMotor1Port = 1
-        kRightMotor2Port = 3
-        kLeftMotor1Port = 2
-        kLeftMotor2Port = 4
-        shooterMotorPort = 5
-
-
-
-
-#Make the motors work using SparkMax
-        self.right1 = rev.SparkMax(kRightMotor1Port, SparkLowLevel.MotorType.kBrushed)
-        self.right3 = rev.SparkMax(kRightMotor2Port, SparkLowLevel.MotorType.kBrushed)
-
-
-        self.left2 = rev.SparkMax(kLeftMotor1Port, SparkLowLevel.MotorType.kBrushed)
-        self.left4 = rev.SparkMax(kLeftMotor2Port, SparkLowLevel.MotorType.kBrushed)
-        self.shooterMotor = rev.SparkMax(shooterMotorPort, SparkLowLevel.MotorType.kBrushed)
-
-        # Set right-side motors to be inverted
-        self.right1.setInverted(True)
-        self.right3.setInverted(True)
-
-#Make the MeccanumDrive work
-        self.drive = MecanumDrive(self.left2, self.left4, self.right1, self.right3)
-#Make the Xbox controller work
-        self.controller = wpilib.XboxController(0)
-        self.drive = MecanumDrive(self.left2, self.left4, self.right1, self.right3)
         
-        #Limit the speed of the motors (I hope this is what this means lol)
-        '''
-        self.right1.setSmartCurrentLimit(constants.kDriveCurrentLimit)
-        self.right2.setSmartCurrentLimit(constants.kDriveCurrentLimit)
-        self.left1.setSmartCurrentLimit(constants.kDriveCurrentLimit)
-        self.left2.setSmartCurrentLimit(constants.kDriveCurrentLimit)
-        '''
+    #Make the motors work using SparkMax 
+        
+        # right side motors
+        self.rightFront = SparkMax(RIGHT_FRONT_MOTOR, SparkLowLevel.MotorType.kBrushed)
+        self.rightRear = SparkMax(RIGHT_REAR_MOTOR, SparkLowLevel.MotorType.kBrushed)
+        # left side motors
+        self.leftFront = SparkMax(LEFT_FRONT_MOTOR, SparkLowLevel.MotorType.kBrushed)
+        self.leftRear = SparkMax(LEFT_REAR_MOTOR, SparkLowLevel.MotorType.kBrushed)
+        # intake and elevator motors
+        self.intake = SparkMax(INTAKE_MOTOR, SparkLowLevel.MotorType.kBrushed)
+        self.elevator = SparkMax(ELEVATOR_MOTOR, SparkLowLevel.MotorType.kBrushed)
+        
+        # Set right-side motors to be inverted
+        self.rightFront.setInverted(True)
+        self.rightRear.setInverted(True)
+        
+        # Creates mecanum drive 
+        self.drive = MecanumDrive(self.leftFront, self.leftRear, self.rightFront, self.rightRear)
+        # Make the Xbox controller work
+        self.controller = wpilib.XboxController(0)
+
+
+    #this part of the code is for autonomous mode which we havent started yet so the "pass" tells the robot to ignore it for now
+    def AutonomousInit(self):
+            pass
+            
+        
+        
+    def AutonomousPeriodic(self):
+            pass
+        
+        
     def teleopPeriodic(self):
+        
         # This part of the code runs repeatedly during teleop mode and where the robot "uses" the knowledge you gave it during the Initialize part
-        #self.drive.driveCartesian(self.controller.getX(), self.controller.getY(), self.controller.getZ())
 
-        # okay so TBH the following code is what chatgpt told me to do to change how the controller controls the drive
-        left_y = self.controller.getLeftY()  # Left joystick Y-axis (forward/backward)
-        right_y = self.controller.getRightY()  # Right joystick Y-axis (forward/backward)
+        # Here, the controller gets the values inputted by the joysticks and bumper to allow the robot to function
+        leftY = -self.controller.getLeftY()  # Left joystick Y-axis (forward/backward)
+        leftX = self.controller.getLeftX()  # Right joystick Y-axis (forward/backward)
         rotation = self.controller.getRightX()  # Right joystick X-axis (turning)
-        self.drive.driveCartesian(left_y, right_y, rotation)
-
-        if self.controller.getRightTriggerAxis() > 0.2:
-            self.shooterMotor.set(0.5)  # 1 is full speed so 0.5 is half speed go higher number if it doesn't work.
+        rightTrigger = self.controller.getRightTriggerAxis()
+        
+        self.drive.driveCartesian(leftY, leftX, rotation,0)
+       
+        if (rightTrigger > 0.2):
+            self.intake.set(0.5)  # Full power forward (0.5 is 50% power)
         else:
-            self.shooterMotor.set(0)
+            self.intake.set(0)
 
 if __name__ == "__main__":
     wpilib.run(MyRobot)
-
- 
+    
+    
