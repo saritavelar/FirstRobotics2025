@@ -4,31 +4,35 @@
 
 import wpilib
 import math 
-from wpilib import CameraServer
+import wpilib.drive
+from wpilib.cameraserver import CameraServer
 from wpilib.drive import MecanumDrive
 from rev import SparkMax, SparkLowLevel
+
+# States the CAN IDs of the motor controllers
+RIGHT_FRONT_MOTOR = 1
+LEFT_FRONT_MOTOR = 2
+LEFT_REAR_MOTOR = 3
+RIGHT_REAR_MOTOR = 5
+INTAKE_MOTOR = 4
+#ELEVATOR_MOTOR = 6
 
 #Declare the class I'm sure why but you have to do this
 class MyRobot(wpilib.TimedRobot):
     
     # Allows the motor variables to be called on anywhere in the program
-    global RIGHT_FRONT_MOTOR,LEFT_FRONT_MOTOR,RIGHT_REAR_MOTOR,LEFT_REAR_MOTOR,INTAKE_MOTOR,ELEVATOR_MOTOR
-    
-    # States the CAN ID of each motor
-    RIGHT_FRONT_MOTOR = 1
-    LEFT_FRONT_MOTOR = 2
-    RIGHT_REAR_MOTOR = 5
-    LEFT_REAR_MOTOR = 3
-    INTAKE_MOTOR = 4
-    ELEVATOR_MOTOR = 6
+    global RIGHT_FRONT_MOTOR,LEFT_FRONT_MOTOR,RIGHT_REAR_MOTOR,LEFT_REAR_MOTOR,INTAKE_MOTOR#,ELEVATOR_MOTOR
 
     #Initialize ur robot this parts makes everything work you set the robot up with al the "knowledge"
     def robotInit(self):
         
         #initializes camera(s)
-        self.camera = CameraServer.startAutomaticCapture(0)
-        self.camera.setResolution(600,400)
-    
+        '''
+        CameraServer.launch()
+        camera = wpilib.USBCamera()
+        camera.startCapture()
+        wpilib.CameraServer.launch()
+        '''
         # Make the motors work using SparkMax 
         # right side motors
         self.rightFront = SparkMax(RIGHT_FRONT_MOTOR, SparkLowLevel.MotorType.kBrushed)
@@ -38,7 +42,7 @@ class MyRobot(wpilib.TimedRobot):
         self.leftRear = SparkMax(LEFT_REAR_MOTOR, SparkLowLevel.MotorType.kBrushed)
         # intake and elevator motors
         self.intake = SparkMax(INTAKE_MOTOR, SparkLowLevel.MotorType.kBrushed)
-        self.elevator = SparkMax(ELEVATOR_MOTOR, SparkLowLevel.MotorType.kBrushed)
+        #self.elevator = SparkMax(ELEVATOR_MOTOR, SparkLowLevel.MotorType.kBrushed)
         
         # Creates mecanum drive 
         self.drive = MecanumDrive(self.leftFront, self.leftRear, self.rightFront, self.rightRear)
@@ -47,20 +51,23 @@ class MyRobot(wpilib.TimedRobot):
 
 
     #this part of the code is for autonomous mode which we havent started yet so the "pass" tells the robot to ignore it for now
-    def AutonomousInit(self):
-        
+    def autonomousInit(self):
+        self.drive.driveCartesian(0,0,0)
+        self.intake.set(0)
         self.timer = wpilib.Timer()
         self.timer.start()
     
         
-    def AutonomousPeriodic(self):
-    
-        if self.timer.get() < 3.0: 
-            self.drive.driveCartesian(0,0.25,0)
+    def autonomousPeriodic(self):
+        
+        if self.timer.get() < 4.0: 
+            self.drive.driveCartesian(0.25,0,0)
+
         else:
             self.drive.driveCartesian(0,0,0)
+            self.intake.set(.5)
             self.timer.stop()
-            self.timer.reset()
+            #self.timer.reset()
             
      
     def teleopPeriodic(self):
@@ -73,6 +80,7 @@ class MyRobot(wpilib.TimedRobot):
         rightTrigger = self.controller.getRightTriggerAxis()
         
         # acceleration variables 
+        
         if leftX == 0: 
             accelerationX = 0  
         else:
@@ -85,7 +93,8 @@ class MyRobot(wpilib.TimedRobot):
         
         # drive cartesian allows the robot to move 
         self.drive.driveCartesian(accelerationY, accelerationX, rotation)
-       
+        #self.drive.driveCartesian(leftY, leftX, rotation)
+
         # turns intake motor on when right trigger is pressed 
         if (rightTrigger > 0.2):
             self.intake.set(1)  # Motor Power (0-1 = 0%-100%, accordingly)
